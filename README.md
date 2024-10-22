@@ -72,7 +72,8 @@ A simple user management API built with FastAPI, featuring user registration, au
   {
       "username": "new_username",
       "password": "new_password",
-      "email": "user@example.com"
+      "email": "user@example.com",
+       "role": "admin", // only admin or user
   }
   ```
 
