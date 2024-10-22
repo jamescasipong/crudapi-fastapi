@@ -1,6 +1,5 @@
-Here's a comprehensive README template for your FastAPI project:
+Simple CRUD with FastAPI & MongoDB.
 
-```markdown
 # FastAPI User Management API
 
 A simple user management API built with FastAPI, featuring user registration, authentication, and CRUD operations.
@@ -31,7 +30,12 @@ A simple user management API built with FastAPI, featuring user registration, au
    ```bash
    pip install fastapi[all] pymongo python-jose passlib
    ```
-
+4. Create .env file and copy and paste the following into the file:
+   ```bash
+   SECRET_KEY=any_key
+   ALGORITHM = HS256
+   MONGODB_URL = mongodb://localhost:27017/
+   ```
 4. Set up your MongoDB database.
 
 ## Usage
@@ -45,9 +49,9 @@ A simple user management API built with FastAPI, featuring user registration, au
    cd app -> python main.py
    ```
 
-3. Access the API at `http://127.0.0.1:8000/docs`.
+2. Access the API at `http://127.0.0.1:8000/docs`.
 
-4. Use the following endpoints:
+3. Use the following endpoints:
 
 ### Authentication
 
@@ -89,22 +93,3 @@ A simple user management API built with FastAPI, featuring user registration, au
 - **Delete User**  
   `DELETE /{user_id}` (Requires JWT and Admin role)
 
-## Security
-
-- Use a secure `SECRET_KEY` in your application.
-- Configure proper role-based access controls.
-
-## License
-
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-
-## Contributing
-
-Contributions are welcome! Please open an issue or submit a pull request.
-
-## Acknowledgments
-
-Thanks to FastAPI and its community for creating an excellent framework!
-```
-
-Feel free to adjust any sections as needed!
