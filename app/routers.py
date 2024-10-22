@@ -6,12 +6,17 @@ from datetime import datetime, timedelta
 from typing import Optional
 from database import db
 from models import User
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 # Secret key to encode JWT
-SECRET_KEY = "your_secret_key"
-ALGORITHM = "HS256"
+SECRET_KEY = os.getenv("SECRET_KEY")
+ALGORITHM = os.getenv("ALGORITHM")
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
+print(f"SECRET_KEY: {SECRET_KEY}, ALGORITHM: {ALGORITHM}")
 # Password hashing context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -81,7 +86,9 @@ async def register_user(user: User):
     return {"msg": "User registered successfully"}
 
 @router.get("/", response_model=list, dependencies=[Depends(get_current_user)])
-async def read_root():
+async def read_all(current_user: dict = Depends(get_current_user)):
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="You're not authorized to create a user. Only admins can create users.")
     result = db["users"].find()
     users = []
     for user in result:
@@ -98,7 +105,7 @@ async def read_user(user_id: int):
 @router.post("/", response_model=dict, dependencies=[Depends(get_current_user)])
 async def create_user(user: User, current_user: dict = Depends(get_current_user)):
     if current_user["role"] != "admin":
-        raise HTTPException(status_code=403, detail="Forbidden")
+        raise HTTPException(status_code=403, detail="You're not authorized to create a user. Only admins can create users.")
     doesExist = db["users"].find_one({"email": user.email})
     if doesExist:
         return {"error": "User already exists"}
@@ -116,6 +123,8 @@ async def update_user(user_id: str, user: User):
 from bson import ObjectId
 
 @router.delete("/{user_id}", response_model=dict, dependencies=[Depends(get_current_user)])
-async def delete_user(user_id: str):
+async def delete_user(user_id: str, current_user: dict = Depends(get_current_user)):
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="You're not authorized to create a user. Only admins can create users.")
     result = db["users"].delete_one({"_id": ObjectId(user_id)})
     return {"deleted_count": result.deleted_count}
