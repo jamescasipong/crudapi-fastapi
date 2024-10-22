@@ -28,7 +28,7 @@ A simple user management API built with FastAPI, featuring user registration, au
 
 3. Install the required packages:
    ```bash
-   pip install fastapi[all] pymongo python-jose passlib
+   pip install -r requirements.txt
    ```
 4. Create .env file and copy and paste the following into the file:
    ```bash
@@ -42,7 +42,7 @@ A simple user management API built with FastAPI, featuring user registration, au
 
 1. Start the server:
    ```bash
-   uvicorn main:app --reload
+   uvicorn main:app --reload or python -m uvicorn main:app --reload
    ```
    or
    ```bash
