@@ -40,10 +40,14 @@ A simple user management API built with FastAPI, featuring user registration, au
    ```bash
    uvicorn main:app --reload
    ```
+   or
+   ```bash
+   cd app -> python main.py
+   ```
 
-2. Access the API at `http://127.0.0.1:8000`.
+3. Access the API at `http://127.0.0.1:8000`.
 
-3. Use the following endpoints:
+4. Use the following endpoints:
 
 ### Authentication
 
