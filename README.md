@@ -45,7 +45,7 @@ A simple user management API built with FastAPI, featuring user registration, au
    cd app -> python main.py
    ```
 
-3. Access the API at `http://127.0.0.1:8000`.
+3. Access the API at `http://127.0.0.1:8000/docs`.
 
 4. Use the following endpoints:
 
