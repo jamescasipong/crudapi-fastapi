@@ -16,8 +16,8 @@ A simple user management API built with FastAPI, featuring user registration, au
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/your-repo.git
-   cd your-repo
+   git clone https://github.com/jamescasipong/crudapi-fastapi
+   cd crudapi-fastapi
    ```
 
 2. Create a virtual environment:
