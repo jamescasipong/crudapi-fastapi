@@ -1,64 +1,19 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from jose import JWTError, jwt
-from passlib.context import CryptContext
-from datetime import datetime, timedelta
-from typing import Optional
-from database import db
-from models import User
-from dotenv import load_dotenv
-import os
-
+from fastapi import APIRouter, Depends, HTTPException, status # Importing the APIRouter, Depends, HTTPException, and status classes
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm # Importing the OAuth2PasswordBearer and OAuth2PasswordRequestForm classes
+from datetime import  timedelta # Importing the datetime and timedelta modules
+from database import db # Importing the database connection
+from models import User # Importing the User model
+from dotenv import load_dotenv # Importing the load_dotenv function
+from auth import verify_password, get_password_hash # Importing the helper functions
+from auth import get_current_user, create_access_token # Importing the get_current_user and create_access_token functions
+from bson import ObjectId
+from jose import jwt
+from auth import SECRET_KEY, ALGORITHM
 load_dotenv()
 
-# Secret key to encode JWT
-SECRET_KEY = os.getenv("SECRET_KEY")
-ALGORITHM = os.getenv("ALGORITHM")
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
-
-print(f"SECRET_KEY: {SECRET_KEY}, ALGORITHM: {ALGORITHM}")
-# Password hashing context
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-# OAuth2 scheme
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 router = APIRouter()
-
-# Utility functions
-def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
-
-def get_password_hash(password):
-    return pwd_context.hash(password)
-
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
-    to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
-
-async def get_current_user(token: str = Depends(oauth2_scheme)):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("username")
-        if username is None:
-            raise credentials_exception
-    except JWTError:
-        raise credentials_exception
-    user = db["users"].find_one({"username": username})
-    if user is None:
-        raise credentials_exception
-    return user
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 # Routes
 @router.post("/token", response_model=dict)
@@ -71,6 +26,7 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
             headers={"WWW-Authenticate": "Bearer"},
         )
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+
     access_token = create_access_token(
         data={"username": user["username"], "role": user["role"]}, expires_delta=access_token_expires
     )
@@ -78,14 +34,15 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
 
 @router.post("/register", response_model=dict)
 async def register_user(user: User):
-    user_dict = user.dict()
+    user_dict = user.serialized()
     user_dict["password"] = get_password_hash(user_dict.pop("password"))
     if db["users"].find_one({"username": user_dict["username"]}):
         raise HTTPException(status_code=400, detail="Username already registered")
     db["users"].insert_one(user_dict)
     return {"msg": "User registered successfully"}
 
-@router.get("/", response_model=list, dependencies=[Depends(get_current_user)])
+
+@router.get("/", response_model=list)
 async def read_all(current_user: dict = Depends(get_current_user)):
     if current_user["role"] != "admin":
         raise HTTPException(status_code=403, detail="You're not authorized to create a user. Only admins can create users.")
@@ -96,13 +53,7 @@ async def read_all(current_user: dict = Depends(get_current_user)):
         users.append(user)
     return users
 
-@router.get("/{user_id}", response_model=dict, dependencies=[Depends(get_current_user)])
-async def read_user(user_id: int):
-    
-    result = db["users"].find_one({"id": user_id})
-    return result
-
-@router.post("/", response_model=dict, dependencies=[Depends(get_current_user)])
+@router.post("/", response_model=dict)
 async def create_user(user: User, current_user: dict = Depends(get_current_user)):
     if current_user["role"] != "admin":
         raise HTTPException(status_code=403, detail="You're not authorized to create a user. Only admins can create users.")
@@ -115,16 +66,25 @@ async def create_user(user: User, current_user: dict = Depends(get_current_user)
     insert["_id"] = str(insert["_id"])
     return insert
 
-@router.put("/{user_id}", response_model=dict, dependencies=[Depends(get_current_user)])
-async def update_user(user_id: str, user: User):
+@router.put("/{user_id}", response_model=dict)
+async def update_user(user_id: str, user: User, current_user: dict = Depends(get_current_user)):
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="You're not authorized to create a user. Only admins can create users.")
     result = db["users"].update_one({"_id": ObjectId(user_id)}, {"$set": user.serialized()})
     return {"modified_count": result.modified_count}
 
-from bson import ObjectId
 
-@router.delete("/{user_id}", response_model=dict, dependencies=[Depends(get_current_user)])
+@router.delete("/{user_id}", response_model=dict)
 async def delete_user(user_id: str, current_user: dict = Depends(get_current_user)):
     if current_user["role"] != "admin":
         raise HTTPException(status_code=403, detail="You're not authorized to create a user. Only admins can create users.")
+    
+    if user_id == current_user["_id"]:
+        raise HTTPException(status_code=403, detail="You can't delete yourself")
+    
+    if db["users"].count_documents({"_id": ObjectId(user_id)}) == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+
     result = db["users"].delete_one({"_id": ObjectId(user_id)})
     return {"deleted_count": result.deleted_count}

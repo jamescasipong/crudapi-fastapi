@@ -1,10 +1,12 @@
 from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, validator
+from typing import Literal
 
 class User(BaseModel):
     username: str
     email: EmailStr
     password: str
-    role: str
+    role: Literal['user', 'admin']
 
     def serialized(self) -> dict:
         return {
@@ -13,6 +15,3 @@ class User(BaseModel):
             "password": self.password,
             "role": self.role,
         }
-    
-    def list(self) -> list:
-        return [self.serialized() for self in self] 
