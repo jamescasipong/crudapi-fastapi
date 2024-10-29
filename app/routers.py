@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status # Importing the APIRouter, Depends, HTTPException, and status classes
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm # Importing the OAuth2PasswordBearer and OAuth2PasswordRequestForm classes
+from fastapi.security import OAuth2PasswordRequestForm # Importing the OAuth2PasswordBearer and OAuth2PasswordRequestForm classes
 from datetime import  timedelta # Importing the datetime and timedelta modules
 from database import db # Importing the database connection
 from models import User # Importing the User model
@@ -7,8 +7,6 @@ from dotenv import load_dotenv # Importing the load_dotenv function
 from auth import verify_password, get_password_hash # Importing the helper functions
 from auth import get_current_user, create_access_token # Importing the get_current_user and create_access_token functions
 from bson import ObjectId
-from jose import jwt
-from auth import SECRET_KEY, ALGORITHM
 load_dotenv()
 
 
